@@ -1,25 +1,133 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Course Project 1
+------------------------------------------
+
+### Loading and preprocessing the data
+```{r, include=FALSE}
+cp1 <- read.csv("activity.csv", header = TRUE)
+cp1$date <- as.Date(cp1$date)
+library(dplyr)
+```
+
+```{r, echo=FALSE}
+head(cp1,10)
+```
 
 
-## Loading and preprocessing the data
+### What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps taken per day
+
+```{r, include=FALSE}
+total_steps <- cp1 %>% group_by(date) %>% summarize(total_steps = sum(steps, na.rm = TRUE))
+```
+
+```{r, echo=FALSE}
+head(total_steps, 10)
+```
+
+2. Histogram
+
+```{r, echo=FALSE}
+hist(total_steps$total_steps, breaks = 10, xlab ="Steps per day", main="Steps per day Histogram")
+```
 
 
+3. Calculate mean and median
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
+```{r, echo=FALSE}
+mean(total_steps$total_steps)
+median(total_steps$total_steps)
+```
 
 
+### What is the average daily activity pattern?
 
-## Are there differences in activity patterns between weekdays and weekends?
+1. Series plot of the 5-minute interval and the average number of steps taken
+
+```{r, include=FALSE}
+total_interval <- cp1 %>% group_by(interval) %>% summarize(total_interval = mean(steps, na.rm = TRUE))
+```
+
+```{r, echo=FALSE}
+plot(total_interval$interval, total_interval$total_interval, type = "l", xlab = "5-min interval", ylab="Average steps", main="Average daily steps per interval" )
+```
+
+
+2. 5-minutes interval with the maximum number of steps
+
+```{r, include=FALSE}
+maxsteps <- max(total_interval$total_interval)
+max_interval <- subset(total_interval, total_interval  >= maxsteps)
+print2 <- max_interval[1,1]
+```
+
+```{r, echo=FALSE}
+print(print2)
+```
+
+
+### Imputing missing values
+
+1. Total Nas
+
+```{r, echo=FALSE}
+sum(is.na(cp1))
+```
+
+
+2/3.Substitute NA by mean and create the dataset
+
+```{r, include=FALSE}
+cp1nNa <- cp1 %>% mutate_all(~ifelse(is.na(.x), mean(.x, na.rm = TRUE), .x))
+cp1nNa$date <- as.Date(cp1nNa$date, origin="1970-01-01")
+```
+
+```{r, echo=FALSE}
+head(cp1nNa,10)
+```
+
+4. Make the histogram an calculate mean and median
+
+```{r, include=FALSE}
+total_stepsnNa <- cp1nNa %>% group_by(date) %>% summarize(total_stepsnNa = sum(steps, na.rm = TRUE))
+```
+
+```{r, echo=FALSE}
+hist(total_stepsnNa$total_stepsnNa, breaks = 10, xlab ="Steps per day", main="Steps per day Histogram")
+```
+
+```{r, echo=FALSE}
+mean(total_stepsnNa$total_stepsnNa)
+median(total_stepsnNa$total_stepsnNa)
+```
+
+
+### Are there any differences in activity patterns between weekdays and weeends?
+
+1. Create new vector with variables weekday and weekend
+
+```{r, include=FALSE}
+cp1$weekday <- weekdays(cp1$date)
+cp1$weekend <- grepl("S.+", cp1$weekday)
+```
+
+```{r, echo=FALSE}
+head(cp1,10)
+```
+
+2. Plot comparing weekdays and weekends
+
+```{r, echo=FALSE}
+par(mfrow = c(2, 1))
+weekend <- filter(cp1, weekend == TRUE)
+weekday <- filter(cp1, weekend == FALSE)
+
+total_interval_weekday <- weekday %>% group_by(interval) %>% summarize(total_interval_weekday = mean(steps, na.rm = TRUE))
+plot(total_interval_weekday$interval, total_interval_weekday$total_interval_weekday, type = "l", xlab = "5-min interval", ylab="Average steps", main="Average daily steps per interval" )
+
+
+total_interval_weekend <- weekend %>% group_by(interval) %>% summarize(total_interval_weekend = mean(steps, na.rm = TRUE))
+plot(total_interval_weekend$interval, total_interval_weekend$total_interval_weekend, type = "l", xlab = "5-min interval", ylab="Average steps", main="Average daily steps per interval" )
+```
+
+
